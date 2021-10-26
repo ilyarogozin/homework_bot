@@ -99,7 +99,9 @@ def main():
                 send_message(BOT, message)
                 logging.info('Сообщение отправлено успешно')
             except Exception:
-                logging.error('Сбой при отправке сообщения')
+                message = 'Сбой при отправке сообщения'
+                logging.error(message)
+                send_message(BOT, message)
             current_timestamp = int(time.time())
             time.sleep(RETRY_TIME)
         except Exception as error:
