@@ -40,6 +40,7 @@ HOMEWORK_STATUSES = {
 
 
 def send_message(bot, message):
+    """Отправляет в Telegram сообщение."""
     bot.send_message(
         chat_id=CHAT_ID,
         text=message
@@ -47,6 +48,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(url, current_timestamp):
+    """Отправляет запрос к API домашки на эндпоинт."""
     headers = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
     payload = {'from_date': current_timestamp}
     response = requests.get(url=url, headers=headers, params=payload)
@@ -57,12 +59,16 @@ def get_api_answer(url, current_timestamp):
 
 
 def parse_status(homework):
+    """Если статус изменился — анализирует его."""
     verdict = HOMEWORK_STATUSES[homework['status']]
     homework_name = homework['homework_name']
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_response(response):
+    """Проверяет полученный ответ на корректность.
+    Проверяет, не изменился ли статус.
+    """
     try:
         homework = response.get('homeworks')[0]
     except IndexError as error:
@@ -77,6 +83,7 @@ def check_response(response):
 
 
 def main():
+    """Бот-ассистент в бесконечном цикле выполняет ожидаемые операции."""
     current_timestamp = int(time.time())
     while True:
         try:
