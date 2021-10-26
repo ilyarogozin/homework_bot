@@ -89,7 +89,7 @@ def check_response(response):
 
 def main():
     """Бот-ассистент в бесконечном цикле выполняет ожидаемые операции."""
-    current_timestamp = int(time.time())
+    current_timestamp = 0
     while True:
         try:
             response = get_api_answer(ENDPOINT, current_timestamp)
