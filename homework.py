@@ -60,8 +60,13 @@ def get_api_answer(url, current_timestamp):
 
 def parse_status(homework):
     """Если статус изменился — анализирует его."""
-    verdict = HOMEWORK_STATUSES[homework['status']]
-    homework_name = homework['homework_name']
+    try:
+        verdict = HOMEWORK_STATUSES[homework['status']]
+        homework_name = homework['homework_name']
+    except TypeError:
+        message = 'Отсутствую ожидаемые ключи'
+        logging.error(message)
+        return send_message(BOT, message)
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
