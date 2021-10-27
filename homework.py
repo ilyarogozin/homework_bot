@@ -32,7 +32,9 @@ ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 try:
     requests.get(url=ENDPOINT)
 except Exception:
-    logging.error('Эндпоинт недоступен')
+    message = 'Эндпоинт недоступен'
+    logging.error(message)
+    raise SystemExit(message)
 HOMEWORK_STATUSES = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
@@ -54,8 +56,9 @@ def get_api_answer(url, current_timestamp):
     payload = {'from_date': current_timestamp}
     response = requests.get(url=url, headers=headers, params=payload)
     if response.status_code != HTTPStatus.OK:
-        logging.error('Статус запроса к API не 200')
-        raise Exception('Статус запроса к API не 200')
+        message = f'Статус запроса к API - {response.status_code}'
+        logging.error(message)
+        raise Exception(message)
     return response.json()
 
 
