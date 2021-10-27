@@ -13,10 +13,9 @@ load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
-    filename='main.log',
-    format='%(asctime)s [%(levelname)s] %(message)s, %(name)s'
+    format='%(asctime)s [%(levelname)s] %(message)s, %(name)s',
+    handlers=[logging.StreamHandler(stream=sys.stdout)]
 )
-logger = logging.StreamHandler(stream=sys.stdout)
 
 try:
     PRACTICUM_TOKEN = os.environ['PRACTICUM_TOKEN']
@@ -68,7 +67,7 @@ def parse_status(homework):
         verdict = HOMEWORK_STATUSES[homework['status']]
         homework_name = homework['homework_name']
     except TypeError:
-        message = 'Отсутствую ожидаемые ключи'
+        message = 'Отсутствуют ожидаемые ключи'
         logging.error(message)
         return send_message(BOT, message)
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
