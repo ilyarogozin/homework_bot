@@ -19,12 +19,13 @@ logging.basicConfig(
 logger = logging.StreamHandler(stream=sys.stdout)
 
 try:
-    PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
-    TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-    CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+    PRACTICUM_TOKEN = os.environ['PRACTICUM_TOKEN']
+    TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
+    CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 except Exception:
-    message = 'Отсутствую одна или более переменные окружения'
+    message = 'Отсутствуют одна или более переменные окружения'
     logging.critical(message)
+    raise SystemExit(message)
 BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
@@ -80,9 +81,15 @@ def check_response(response):
         logging.error(f'Пустой список: {error}')
         message = 'Ни у одной из домашних работ не появился новый статус'
         return send_message(BOT, message)
+    except KeyError:
+        message = 'Отсутствует ожидаемый ключ: "homeworks"'
+        logging.error(message)
+        return send_message(BOT, message)
+
     if homework['status'] not in HOMEWORK_STATUSES:
         message = f'У домашней работы неизвестный статус: {homework["status"]}'
         logging.error(message)
+        send_message(BOT, message)
         raise Exception(message)
     return homework
 
