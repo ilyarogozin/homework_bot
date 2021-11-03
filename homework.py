@@ -13,8 +13,8 @@ load_dotenv()
 ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-CHAT_ID = os.getenv('CHAT_ID')
-ENV_VARS = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, CHAT_ID]
+TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
+ENV_VARS = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
 for var in ENV_VARS:
     if var is None:
         logging.critical(ENV_VAR_IS_NONE.format(f'{var}'))
@@ -43,7 +43,7 @@ HOMEWORK_VERDICTS = {
 def send_message(bot, message):
     """Отправляет в Telegram сообщение."""
     bot.send_message(
-        chat_id=CHAT_ID,
+        chat_id=TELEGRAM_CHAT_ID,
         text=message
     )
 
