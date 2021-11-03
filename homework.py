@@ -2,39 +2,38 @@ import logging
 import os
 import sys
 import time
-from http import HTTPStatus
 
 import requests
 import telegram
-import telegram.ext
 from dotenv import load_dotenv
 
 load_dotenv()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s, %(name)s',
-    handlers=[logging.StreamHandler(stream=sys.stdout)]
-)
 
-try:
-    PRACTICUM_TOKEN = os.environ['PRACTICUM_TOKEN']
-    TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
-    CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
-except Exception:
-    message = 'Отсутствуют одна или более переменные окружения'
-    logging.critical(message)
-    raise SystemExit(message)
-BOT = telegram.Bot(token=TELEGRAM_TOKEN)
+ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
+PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+CHAT_ID = os.getenv('CHAT_ID')
+ENV_VARS = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, CHAT_ID]
+for var in ENV_VARS:
+    if var is None:
+        logging.critical(ENV_VAR_IS_NONE.format(f'{var}'))
+        raise KeyError(ENV_VAR_IS_NONE.format(f'{var}'))
+HEADERS = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
+ENDPOINT_IS_NOT_AVAILABLE = 'Эндпоинт недоступен'
+STATUS_HOMEWORK_IS_CHANGED = (
+    'Изменился статус проверки работы "{homework_name}". {verdict}'
+)
+STATUS_HOMEWORK_IS_NOT_CHANGED = 'Статус домашней работы не изменился: {}'
+UNKNOWN_STATUS_OF_HOMEWORK = 'У домашней работы неизвестный статус: {}'
+FAILURE_IN_PROGRAM = 'Сбой в работе программы: {}'
+NO_EXPECTED_KEY = 'Отсутствует ожидаемый ключ: {}'
+MESSAGE_SENT_SUCCESSFULLY = 'Сообщение отправлено успешно'
+ERROR_SENDING_MESSAGE = 'Ошибка при отправке сообщения'
+UNSECCESSFUL_STATUS_TO_API = 'Неуспешный статус запроса к API: {}, ошибка: {}'
 RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
-try:
-    requests.get(url=ENDPOINT)
-except Exception:
-    message = 'Эндпоинт недоступен'
-    logging.error(message)
-    raise SystemExit(message)
-HOMEWORK_STATUSES = {
+HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
     'rejected': 'Работа проверена, в ней нашлись ошибки.'
@@ -51,26 +50,21 @@ def send_message(bot, message):
 
 def get_api_answer(url, current_timestamp):
     """Отправляет запрос к API домашки на эндпоинт."""
-    headers = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
     payload = {'from_date': current_timestamp}
-    response = requests.get(url=url, headers=headers, params=payload)
-    if response.status_code != HTTPStatus.OK:
-        message = f'Статус запроса к API - {response.status_code}'
-        logging.error(message)
-        raise Exception(message)
-    return response.json()
-
-
-def parse_status(homework):
-    """Если статус изменился — анализирует его."""
-    try:
-        verdict = HOMEWORK_STATUSES[homework['status']]
-        homework_name = homework['homework_name']
-    except TypeError:
-        message = 'Отсутствуют ожидаемые ключи'
-        logging.error(message)
-        return send_message(BOT, message)
-    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+    response = requests.get(
+        url=url, headers=HEADERS, params=payload
+    )
+    if response.status_code != 200:
+        raise requests.exceptions.RequestException(
+            ENDPOINT_IS_NOT_AVAILABLE
+        )
+    response = response.json()
+    if 'code' in response or 'error' in response:
+        raise requests.exceptions.HTTPError(
+            UNSECCESSFUL_STATUS_TO_API.format(response['code'],
+                                              response['error'])
+        )
+    return response
 
 
 def check_response(response):
@@ -80,45 +74,56 @@ def check_response(response):
     try:
         homework = response.get('homeworks')[0]
     except IndexError as error:
-        logging.error(f'Пустой список: {error}')
-        message = 'Ни у одной из домашних работ не появился новый статус'
-        return send_message(BOT, message)
+        raise IndexError(STATUS_HOMEWORK_IS_NOT_CHANGED.format(error))
     except KeyError:
-        message = 'Отсутствует ожидаемый ключ: "homeworks"'
-        logging.error(message)
-        return send_message(BOT, message)
-
-    if homework['status'] not in HOMEWORK_STATUSES:
-        message = f'У домашней работы неизвестный статус: {homework["status"]}'
-        logging.error(message)
-        send_message(BOT, message)
-        raise Exception(message)
+        raise KeyError(NO_EXPECTED_KEY.format('homeworks'))
+    if homework['status'] not in HOMEWORK_VERDICTS:
+        raise KeyError(UNKNOWN_STATUS_OF_HOMEWORK.format(homework['status']))
     return homework
+
+
+def parse_status(homework):
+    """Если статус изменился — анализирует его."""
+    try:
+        verdict = HOMEWORK_VERDICTS[homework['status']]
+    except KeyError:
+        raise KeyError(NO_EXPECTED_KEY.format('status'))
+    try:
+        homework_name = homework.get('homework_name')
+    except KeyError:
+        raise KeyError(NO_EXPECTED_KEY.format('homework_name'))
+    return STATUS_HOMEWORK_IS_CHANGED.format(homework_name=homework_name,
+                                             verdict=verdict)
 
 
 def main():
     """Бот-ассистент в бесконечном цикле выполняет ожидаемые операции."""
-    current_timestamp = int(time.time())
+    logging.basicConfig(
+        level=logging.INFO,
+        format=('%(asctime)s [%(levelname)s] %(message)s,'
+                ' %(name)s, line %(lineno)d'),
+        handlers=[logging.StreamHandler(stream=sys.stdout),
+                  logging.FileHandler(filename=__file__ + '.log')]
+    )
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    current_timestamp = 0
     while True:
         try:
             response = get_api_answer(ENDPOINT, current_timestamp)
             homework = check_response(response)
             message = parse_status(homework)
-            try:
-                send_message(BOT, message)
-                logging.info('Сообщение отправлено успешно')
-            except Exception:
-                message = 'Сбой при отправке сообщения'
-                logging.error(message)
-                send_message(BOT, message)
-            current_timestamp = int(time.time())
-            time.sleep(RETRY_TIME)
+            send_message(bot, message)
+            logging.info(MESSAGE_SENT_SUCCESSFULLY)
+            current_timestamp = response['current_date']
         except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-            logging.error(message)
-            send_message(BOT, message)
-            time.sleep(RETRY_TIME)
-            continue
+            logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True,)
+            try:
+                send_message(bot, FAILURE_IN_PROGRAM.format(error))
+            except telegram.error.TelegramError:
+                logging.error(ERROR_SENDING_MESSAGE, exc_info=True,
+                              stack_info=True)
+                send_message(bot, ERROR_SENDING_MESSAGE)
+        time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
