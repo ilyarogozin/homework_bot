@@ -24,7 +24,7 @@ ENDPOINT_IS_NOT_AVAILABLE = 'Эндпоинт недоступен'
 STATUS_HOMEWORK_IS_CHANGED = (
     'Изменился статус проверки работы "{homework_name}". {verdict}'
 )
-STATUS_HOMEWORK_IS_NOT_CHANGED = 'Статус домашней работы не изменился: {}'
+STATUS_HOMEWORK_IS_NOT_CHANGED = 'Статус домашней работы не изменился'
 UNKNOWN_STATUS_OF_HOMEWORK = 'У домашней работы неизвестный статус: {}'
 FAILURE_IN_PROGRAM = 'Сбой в работе программы: {}'
 NO_EXPECTED_KEY = 'Отсутствует ожидаемый ключ: {}'
@@ -73,8 +73,8 @@ def check_response(response):
     """
     try:
         homework = response.get('homeworks')[0]
-    except IndexError as error:
-        raise IndexError(STATUS_HOMEWORK_IS_NOT_CHANGED.format(error))
+    except IndexError:
+        raise IndexError(STATUS_HOMEWORK_IS_NOT_CHANGED)
     except KeyError:
         raise KeyError(NO_EXPECTED_KEY.format('homeworks'))
     if homework['status'] not in HOMEWORK_VERDICTS:
