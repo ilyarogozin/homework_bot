@@ -135,12 +135,15 @@ def main():
         except IndexError:
             logging.error(STATUS_HOMEWORK_IS_NOT_CHANGED, exc_info=True)
             send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
-        except Exception as error:
-            logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True)
-            send_message(bot, FAILURE_IN_PROGRAM.format(error))
         except telegram.error.TelegramError:
             logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
             send_message(bot, ERROR_SENDING_MESSAGE)
+        except Exception as error:
+            logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True)
+            try:
+                send_message(bot, FAILURE_IN_PROGRAM.format(error))
+            except telegram.error.TelegramError:
+                logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
         time.sleep(RETRY_TIME)
 
 
