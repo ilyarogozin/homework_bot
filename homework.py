@@ -43,10 +43,13 @@ HOMEWORK_VERDICTS = {
 
 def send_message(bot, message):
     """Отправляет в Telegram сообщение."""
-    bot.send_message(
-        chat_id=CHAT_ID,
-        text=message
-    )
+    try:
+        bot.send_message(
+            chat_id=CHAT_ID,
+            text=message
+        )
+    except telegram.error.TelegramError:
+        raise telegram.error.TelegramError(ERROR_SENDING_MESSAGE)
 
 
 def get_api_answer(url, current_timestamp):
@@ -125,18 +128,19 @@ def main():
             logging.info(MESSAGE_SENT_SUCCESSFULLY)
             current_timestamp = response['current_date']
         except EnvVarIsNoneError:
-            logging.critical(ENV_VAR_IS_NONE.format(var))
+            logging.critical(ENV_VAR_IS_NONE.format(var), exc_info=True)
+        except requests.exceptions.RequestException:
+            logging.error(ENDPOINT_IS_NOT_AVAILABLE, exc_info=True)
+            send_message(bot, ENDPOINT_IS_NOT_AVAILABLE)
         except IndexError:
-            logging.error(STATUS_HOMEWORK_IS_NOT_CHANGED)
+            logging.error(STATUS_HOMEWORK_IS_NOT_CHANGED, exc_info=True)
             send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
         except Exception as error:
-            logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True,)
-            try:
-                send_message(bot, FAILURE_IN_PROGRAM.format(error))
-            except telegram.error.TelegramError:
-                logging.error(ERROR_SENDING_MESSAGE, exc_info=True,
-                              stack_info=True)
-                send_message(bot, ERROR_SENDING_MESSAGE)
+            logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True)
+            send_message(bot, FAILURE_IN_PROGRAM.format(error))
+        except telegram.error.TelegramError:
+            logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
+            send_message(bot, ERROR_SENDING_MESSAGE)
         time.sleep(RETRY_TIME)
 
 
