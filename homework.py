@@ -13,12 +13,16 @@ load_dotenv()
 ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-ENV_VARS = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
+CHAT_ID = os.getenv('CHAT_ID')
+ENV_VARS = {
+    'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
+    'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
+    'CHAT_ID': CHAT_ID,
+}
 for var in ENV_VARS:
-    if var is None:
-        logging.critical(ENV_VAR_IS_NONE.format(f'{var}'))
-        raise KeyError(ENV_VAR_IS_NONE.format(f'{var}'))
+    if ENV_VARS[var] is None:
+        logging.critical(ENV_VAR_IS_NONE.format(var))
+        sys.exit()
 HEADERS = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
 ENDPOINT_IS_NOT_AVAILABLE = 'Эндпоинт недоступен'
 STATUS_HOMEWORK_IS_CHANGED = (
@@ -43,7 +47,7 @@ HOMEWORK_VERDICTS = {
 def send_message(bot, message):
     """Отправляет в Telegram сообщение."""
     bot.send_message(
-        chat_id=TELEGRAM_CHAT_ID,
+        chat_id=CHAT_ID,
         text=message
     )
 
@@ -115,6 +119,9 @@ def main():
             send_message(bot, message)
             logging.info(MESSAGE_SENT_SUCCESSFULLY)
             current_timestamp = response['current_date']
+        except IndexError:
+            logging.error(STATUS_HOMEWORK_IS_NOT_CHANGED)
+            send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
         except Exception as error:
             logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True,)
             try:
