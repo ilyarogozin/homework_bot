@@ -10,6 +10,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+class EnvVarIsNoneError(Exception):
+    """Кастомная ошибка при отсутствии ожидаемой переменной окружения."""
+
+    pass
+
+
 ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -21,8 +27,7 @@ ENV_VARS = {
 }
 for var in ENV_VARS:
     if ENV_VARS[var] is None:
-        logging.critical(ENV_VAR_IS_NONE.format(var))
-        sys.exit()
+        raise EnvVarIsNoneError(ENV_VAR_IS_NONE.format(var))
 HEADERS = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
 ENDPOINT_IS_NOT_AVAILABLE = 'Эндпоинт недоступен'
 STATUS_HOMEWORK_IS_CHANGED = (
@@ -119,6 +124,8 @@ def main():
             send_message(bot, message)
             logging.info(MESSAGE_SENT_SUCCESSFULLY)
             current_timestamp = response['current_date']
+        except EnvVarIsNoneError:
+            logging.critical(ENV_VAR_IS_NONE.format(var))
         except IndexError:
             logging.error(STATUS_HOMEWORK_IS_NOT_CHANGED)
             send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
