@@ -17,16 +17,16 @@ class EnvVarIsNoneError(Exception):
 
 
 ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
-PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-CHAT_ID = os.getenv('CHAT_ID')
+PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN') or ''
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN') or ''
+CHAT_ID = os.getenv('CHAT_ID') or ''
 ENV_VARS = {
     'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
     'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
     'CHAT_ID': CHAT_ID,
 }
 for var in ENV_VARS:
-    if ENV_VARS[var] is None:
+    if ENV_VARS[var] == '':
         raise EnvVarIsNoneError(ENV_VAR_IS_NONE.format(var))
 HEADERS = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
 ENDPOINT_IS_NOT_AVAILABLE = 'Эндпоинт недоступен'
