@@ -100,7 +100,7 @@ def parse_status(homework):
                                              verdict=verdict)
 
 
-def main():
+def main(): # noqa: ignore=C901
     """Бот-ассистент в бесконечном цикле выполняет ожидаемые операции."""
     logging.basicConfig(
         level=logging.INFO,
@@ -129,15 +129,12 @@ def main():
             current_timestamp = response['current_date']
         except EnvVarIsNoneError:
             logging.critical(ENV_VAR_IS_NONE.format(var), exc_info=True)
-        except requests.exceptions.RequestException:
-            logging.error(ENDPOINT_IS_NOT_AVAILABLE, exc_info=True)
-            send_message(bot, ENDPOINT_IS_NOT_AVAILABLE)
         except IndexError:
-            logging.error(STATUS_HOMEWORK_IS_NOT_CHANGED, exc_info=True)
-            send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
-        except telegram.error.TelegramError:
-            logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
-            send_message(bot, ERROR_SENDING_MESSAGE)
+            logging.info(STATUS_HOMEWORK_IS_NOT_CHANGED, exc_info=True)
+            try:
+                send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
+            except telegram.error.TelegramError:
+                logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
         except Exception as error:
             logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True)
             try:
