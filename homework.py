@@ -131,10 +131,9 @@ def main(): # noqa: ignore=C901
             logging.critical(ENV_VAR_IS_NONE.format(var), exc_info=True)
         except IndexError:
             logging.info(STATUS_HOMEWORK_IS_NOT_CHANGED, exc_info=True)
-            try:
-                send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
-            except telegram.error.TelegramError:
-                logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
+            send_message(bot, STATUS_HOMEWORK_IS_NOT_CHANGED)
+        except telegram.error.TelegramError:
+            logging.error(ERROR_SENDING_MESSAGE, exc_info=True)
         except Exception as error:
             logging.error(FAILURE_IN_PROGRAM.format(error), exc_info=True)
             try:
