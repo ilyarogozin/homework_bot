@@ -16,19 +16,11 @@ class EnvVarIsNoneError(Exception):
     pass
 
 
-ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
-PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN') or ''
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN') or ''
-CHAT_ID = os.getenv('CHAT_ID') or ''
-ENV_VARS = {
-    'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
-    'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
-    'CHAT_ID': CHAT_ID,
-}
-for var in ENV_VARS:
-    if ENV_VARS[var] == '':
-        raise EnvVarIsNoneError(ENV_VAR_IS_NONE.format(var))
+PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+CHAT_ID = os.getenv('CHAT_ID')
 HEADERS = {'Authorization': f'OAuth { PRACTICUM_TOKEN }'}
+ENV_VAR_IS_NONE = 'Отсутствует переменная окружения - {}'
 ENDPOINT_IS_NOT_AVAILABLE = 'Эндпоинт недоступен'
 STATUS_HOMEWORK_IS_CHANGED = (
     'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -114,6 +106,14 @@ def main():
         handlers=[logging.StreamHandler(stream=sys.stdout),
                   logging.FileHandler(filename=__file__ + '.log')]
     )
+    ENV_VARS = {
+        'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
+        'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
+        'CHAT_ID': CHAT_ID,
+    }
+    for var in ENV_VARS:
+        if ENV_VARS[var] is None:
+            raise EnvVarIsNoneError(ENV_VAR_IS_NONE.format(var))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     while True:
