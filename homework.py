@@ -22,6 +22,12 @@ class UnexpectedAcceptedValueError(Exception):
     pass
 
 
+class DenialOfServiceError(Exception):
+    """Кастомная ошибка при отказе сервера в обслуживании."""
+
+    pass
+
+
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
@@ -79,7 +85,7 @@ def get_api_answer(url, current_timestamp):
         logging.exception(e)
     response_json = response.json()
     if 'code' in response_json or 'error' in response_json:
-        raise ConnectionError(
+        raise DenialOfServiceError(
             UNSECCESSFUL_REQUEST_TO_API.format(status=response_json['code'],
                                                error=response_json['error'],
                                                **params)
