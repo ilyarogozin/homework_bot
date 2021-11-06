@@ -41,10 +41,8 @@ ENDPOINT_REQUEST_ERROR = ('Ошибка запроса к эндпоинту:\n'
 STATUS_IS_CHANGED = (
     'Изменился статус проверки работы "{homework_name}". {verdict}'
 )
-STATUS_IS_NOT_CHANGED = 'Статус домашней работы не изменился'
 UNKNOWN_STATUS = 'У домашней работы неизвестный статус: {}'
 FAILURE_IN_PROGRAM = 'Сбой в работе программы: {}'
-NO_EXPECTED_KEY = 'Отсутствует ожидаемый ключ: {}'
 MESSAGE_SENT_SUCCESSFULLY = 'Сообщение "{}" отправлено успешно'
 ERROR_SENDING_MESSAGE = 'Ошибка при отправке сообщения: {}'
 UNSECCESSFUL_REQUEST_TO_API = ('Неуспешный запрос к API:\n'
