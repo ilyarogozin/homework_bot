@@ -42,10 +42,11 @@ STATUS_IS_CHANGED = (
     'Изменился статус проверки работы "{homework_name}". {verdict}'
 )
 UNKNOWN_STATUS = 'У домашней работы неизвестный статус: {}'
+STATUS_IS_NOT_CHANGED = 'Статус работы не изменился'
 FAILURE_IN_PROGRAM = 'Сбой в работе программы: {}'
 MESSAGE_SENT_SUCCESSFULLY = 'Сообщение "{}" отправлено успешно'
 ERROR_SENDING_MESSAGE = 'Ошибка при отправке сообщения: {}'
-NETWORK_FAILURE = ('Произошёл сбой сети: {error}'
+NETWORK_FAILURE = ('Произошёл сбой сети: {error}\n'
                    'url={url}\n'
                    'headers={headers}\n'
                    'params={params}')
@@ -134,6 +135,9 @@ def main():
             message = parse_status(homework)
             send_message(bot, message)
             timestamp = response.get('current_date', timestamp)
+        except IndexError:
+            logging.info(STATUS_IS_NOT_CHANGED)
+            send_message(bot, STATUS_IS_NOT_CHANGED)
         except Exception as error:
             logging.exception(FAILURE_IN_PROGRAM.format(error))
             send_message(bot, FAILURE_IN_PROGRAM.format(error))
@@ -144,7 +148,7 @@ if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,
         format=('%(asctime)s [%(levelname)s] %(name)s,'
-                ' line %(lineno)d, %(message)s,'),
+                ' line %(lineno)d, %(message)s'),
         handlers=[logging.StreamHandler(stream=sys.stdout),
                   logging.FileHandler(filename=__file__ + '.log')]
     )
