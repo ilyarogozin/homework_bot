@@ -101,8 +101,8 @@ def get_api_answer(url, current_timestamp):
 
 
 def check_response(response):
-    """Проверяет полученный ответ на корректность.
-    Проверяет, не изменился ли статус.
+    """Проверяет наличие домашней работы и корректность её статуса.
+    Возвращает домашнюю работу, если статус изменился.
     """
     homework = response['homeworks'][0]
     status = homework['status']
