@@ -45,11 +45,11 @@ UNKNOWN_STATUS = 'У домашней работы неизвестный ста
 FAILURE_IN_PROGRAM = 'Сбой в работе программы: {}'
 MESSAGE_SENT_SUCCESSFULLY = 'Сообщение "{}" отправлено успешно'
 ERROR_SENDING_MESSAGE = 'Ошибка при отправке сообщения: {}'
-BAD_REQUEST_TRY = ('Неудачная попытка запроса: {error}'
+NETWORK_FAILURE = ('Произошёл сбой сети: {error}'
                    'url={url}\n'
                    'headers={headers}\n'
                    'params={params}')
-DENIAL_OF_SERVICE = ('Отказ в обслуживании от API:\n'
+DENIAL_OF_SERVICE = ('Отказ в обслуживании:\n'
                      'code={code}\n'
                      'error={error}\n'
                      'url={url}\n'
@@ -84,7 +84,7 @@ def get_api_answer(url, current_timestamp):
     try:
         response = requests.get(**params)
     except requests.ConnectionError as error:
-        raise ConnectionError(BAD_REQUEST_TRY.format(error=error, **params))
+        raise ConnectionError(NETWORK_FAILURE.format(error=error, **params))
     response_json = response.json()
     if 'code' in response_json or 'error' in response_json:
         raise DenialOfServiceError(
@@ -123,17 +123,17 @@ def main():
     """Бот-ассистент в бесконечном цикле выполняет ожидаемые операции."""
     for name in ('PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'CHAT_ID'):
         if globals()[name] is None:
+            logging.critical(MISSING_ENV_VAR.format(name))
             raise NameError(MISSING_ENV_VAR.format(name))
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time())
+    timestamp = int(time.time())
     while True:
         try:
-            response = get_api_answer(ENDPOINT, current_timestamp)
+            response = get_api_answer(ENDPOINT, timestamp)
             homework = check_response(response)
             message = parse_status(homework)
             send_message(bot, message)
-            current_timestamp = response.get('current_date',
-                                             int(time.time()) - RETRY_TIME)
+            timestamp = response.get('current_date', timestamp)
         except Exception as error:
             logging.exception(FAILURE_IN_PROGRAM.format(error))
             send_message(bot, FAILURE_IN_PROGRAM.format(error))
